@@ -101,21 +101,18 @@ const createTravel = async function(request, response) {
   try {
     const { title, description, attractions } = request.body;
     
-    // Check if file was uploaded
-    if (!request.file) {
+    // Check if file was uploaded and processed by Cloudinary
+    if (!request.file?.cloudinaryUrl) {
       return response.status(400).json({ 
         success: false,
-        error: 'Please provide an image file' 
+        error: 'Error processing the uploaded image' 
       });
     }
 
-    // Get the file information
-    const file = request.file;
-    const filePath = file.path.replace(/\\/g, '/'); // Convert Windows paths to forward slashes
-    const baseUrl = `${request.protocol}://${request.get('host')}`;
-    const imageUrl = `${baseUrl}/${filePath}`;
+    // Get the Cloudinary URL and public ID
+    const { cloudinaryUrl, public_id } = request.file;
     
-    console.log('File stored at:', filePath);
+    console.log('File uploaded to Cloudinary:', cloudinaryUrl);
     
     // Parse attractions if it's a string
     let attractionsArray = [];
@@ -134,7 +131,8 @@ const createTravel = async function(request, response) {
     const travel = await Travel.create({
       title,
       description,
-      image: imageUrl, // Store the URL to access the image
+      image: cloudinaryUrl, // Store the Cloudinary URL
+      imagePublicId: public_id, // Store the Cloudinary public ID for future reference
       attractions: attractionsArray,
     });
     
@@ -147,16 +145,6 @@ const createTravel = async function(request, response) {
     
   } catch (error) {
     console.error('Error in createTravel:', error);
-    
-    // Clean up file in case of error
-    if (request.file?.path) {
-      try {
-        fs.unlinkSync(request.file.path);
-        console.log('Cleaned up file after error:', request.file.path);
-      } catch (unlinkError) {
-        console.error('Error cleaning up file after error:', unlinkError);
-      }
-    }
     
     const statusCode = error.name === 'ValidationError' ? 400 : 500;
     

@@ -1,6 +1,20 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const app = express();
+
+// Verify required environment variables are set
+const requiredEnvVars = [
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET'
+];
+
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars.join(', '));
+  process.exit(1);
+}
 
 const getTravel = require('./routes/travel.routes.js');
 const bookTravel = require('./routes/book.routes.js');
