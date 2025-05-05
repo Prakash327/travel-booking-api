@@ -100,26 +100,71 @@ const deleteTravel = async function (request, response) {
 const createTravel = async function(request, response) {
   try {
     const { title, description, attractions } = request.body;
-    console.log(request.body);
-
-    let imageLocalPath = request.files?.image[0]?.path;
-    if (!imageLocalPath){
-
-      return response.status(400).send("Please provide image file");
+    
+    // Check if file was uploaded
+    if (!request.file) {
+      return response.status(400).json({ 
+        success: false,
+        error: 'Please provide an image file' 
+      });
     }
-    console.log("Image local path:", imageLocalPath);
-    const image = await uploadOnCloudinary(imageLocalPath);
+
+    // Get the file information
+    const file = request.file;
+    const filePath = file.path.replace(/\\/g, '/'); // Convert Windows paths to forward slashes
+    const baseUrl = `${request.protocol}://${request.get('host')}`;
+    const imageUrl = `${baseUrl}/${filePath}`;
+    
+    console.log('File stored at:', filePath);
+    
+    // Parse attractions if it's a string
+    let attractionsArray = [];
+    if (attractions) {
+      try {
+        attractionsArray = typeof attractions === 'string' 
+          ? JSON.parse(attractions) 
+          : attractions;
+      } catch (parseError) {
+        console.error('Error parsing attractions:', parseError);
+        attractionsArray = [];
+      }
+    }
+    
+    // Create travel entry in database
     const travel = await Travel.create({
       title,
       description,
-      image: image.url, // Save the URL from Cloudinary
-      attractions: JSON.parse(attractions), // Parse attractions if it's a string
+      image: imageUrl, // Store the URL to access the image
+      attractions: attractionsArray,
     });
-    response.status(201).send(travel);
-    console.log("Travel data created successfully!");
+    
+    console.log('Travel created successfully:', travel._id);
+    
+    response.status(201).json({
+      success: true,
+      data: travel
+    });
+    
   } catch (error) {
-    console.log(error);
-    response.status(500).send("Error creating travel data!");
+    console.error('Error in createTravel:', error);
+    
+    // Clean up file in case of error
+    if (request.file?.path) {
+      try {
+        fs.unlinkSync(request.file.path);
+        console.log('Cleaned up file after error:', request.file.path);
+      } catch (unlinkError) {
+        console.error('Error cleaning up file after error:', unlinkError);
+      }
+    }
+    
+    const statusCode = error.name === 'ValidationError' ? 400 : 500;
+    
+    response.status(statusCode).json({
+      success: false,
+      error: error.message || 'Error creating travel data',
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
   }
 };
 
