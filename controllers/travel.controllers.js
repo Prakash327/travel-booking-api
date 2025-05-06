@@ -99,20 +99,21 @@ const deleteTravel = async function (request, response) {
 };
 const createTravel = async function(request, response) {
   try {
+    console.log(request.body)
     const { title, description, attractions } = request.body;
     
     // Check if file was uploaded and processed by Cloudinary
-    if (!request.file?.cloudinaryUrl) {
-      return response.status(400).json({ 
-        success: false,
-        error: 'Error processing the uploaded image' 
-      });
-    }
+    // if (!request.file?.cloudinaryUrl) {
+    //   return response.status(400).json({ 
+    //     success: false,
+    //     error: 'Error processing the uploaded image' 
+    //   });
+    // }
 
     // Get the Cloudinary URL and public ID
-    const { cloudinaryUrl, public_id } = request.file;
+    // const { cloudinaryUrl, public_id } = request.file;
     
-    console.log('File uploaded to Cloudinary:', cloudinaryUrl);
+    // console.log('File uploaded to Cloudinary:', cloudinaryUrl);
     
     // Parse attractions if it's a string
     let attractionsArray = [];
@@ -131,8 +132,8 @@ const createTravel = async function(request, response) {
     const travel = await Travel.create({
       title,
       description,
-      image: cloudinaryUrl, // Store the Cloudinary URL
-      imagePublicId: public_id, // Store the Cloudinary public ID for future reference
+      //image: cloudinaryUrl, // Store the Cloudinary URL
+     // imagePublicId: public_id, // Store the Cloudinary public ID for future reference
       attractions: attractionsArray,
     });
     

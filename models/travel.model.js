@@ -12,11 +12,11 @@ const travelSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
+     
     },
     imagePublicId: {
       type: String,
-      required: true,
+     
     },
     attractions: [
       {
